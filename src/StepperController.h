@@ -2,7 +2,7 @@
 
 #include "pins.h"
 #include <FastAccelStepper.h>
-#include <driver/pcnt.h>
+#include <driver/rmt.h>
 #include <Preferences.h>
 
 class StepperController {
@@ -15,15 +15,17 @@ public:
     void handleMotionMode();        // Handle operations in Motion Mode
 
     void switchToSpindleMode();     // Switch to Spindle Mode
-    void handleSpindleMode(int pwmValue);       // Handle operations in Spindle Mode based on PWM input
+    void handleSpindleMode(float duty_cycle);       // Handle operations in Spindle Mode based on PWM input
 
-    void setStepperSpeed(long stepsPerSecond);
-    
 private:
-    void initPulseCounter();        // Initialize the pulse counter for PWM reading
-    int16_t readPWM();              // Read PWM value accurately
+    void initRMT();                 // Initialize the RMT module for PWM reading
+    void readRMT();                 // Read PWM using RMT module   
+    float calculateDutyCycle();     // Calculate duty cycle from RMT readings
+
     void loadSettings();            // Load settings from preferences
     void saveSettings();            // Save settings to preferences
+
+    // GPIO pin configuration for inputs and outputs from pins.h
 
     // Preferences to store settings
     Preferences preferences;
@@ -32,7 +34,11 @@ private:
     FastAccelStepperEngine engine;
     FastAccelStepper* stepper = nullptr;
 
-    // Pulse Counter settings
+    // RMT configuration details
+    rmt_config_t rmt_rx;
+    RingbufHandle_t rb = NULL;
+
+    // Pulse Counter settings (if using PCNT for backup or alternative method)
     static const pcnt_unit_t pcntUnit = PCNT_UNIT_0; // PCNT unit for PWM input
     static const pcnt_channel_t pcntChannel = PCNT_CHANNEL_0; // PCNT channel for PWM input
 
@@ -44,4 +50,6 @@ private:
     // Constants for mode identification
     static const unsigned int MOTION_MODE = 0;
     static const unsigned int SPINDLE_MODE = 1;
+
+    static float dutyCycle; // Duty cycle calculated from PWM input
 };

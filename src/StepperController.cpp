@@ -18,36 +18,29 @@ void StepperController::setup() {
 
     // Initialize the FastAccelStepper engine
     engine.init();
-    //stepper = engine.stepperConnectToPin(stepPinOut);
-    stepper = engine.stepperConnectToPin(stepPinOut, DRIVER_RMT); //use RMT
+    stepper = engine.stepperConnectToPin(stepPinOut);
     if (stepper) {
         stepper->setDirectionPin(dirPinOut);
         stepper->setEnablePin(enablePinOut);
         stepper->setAutoEnable(true);
     }
 
-    // Set up interrupt for Motion Mode pass-through
-    attachInterrupt(digitalPinToInterrupt(stepPinIn), handleStepInterrupt, RISING);
-
-    // Initialize the pulse counter for more accurate PWM measurements
-    initPulseCounter();
+    initRMT(); // Initialize the RMT module for PWM reading
 }
 
-void StepperController::initPulseCounter() {
-    pcnt_config_t pcnt_config;
-    pcnt_config.pulse_gpio_num = pwmInPin;
-    pcnt_config.ctrl_gpio_num = PCNT_PIN_NOT_USED;
-    pcnt_config.channel = pcntChannel;
-    pcnt_config.unit = pcntUnit;
-    pcnt_config.pos_mode = PCNT_COUNT_INC;
-    pcnt_config.neg_mode = PCNT_COUNT_DIS;
-    pcnt_config.lctrl_mode = PCNT_MODE_KEEP;
-    pcnt_config.hctrl_mode = PCNT_MODE_KEEP;
-    pcnt_config.counter_h_lim = 10000;
-    pcnt_config.counter_l_lim = -10000;
-    pcnt_unit_config(&pcnt_config);
-    pcnt_counter_clear(pcntUnit);
-    pcnt_counter_resume(pcntUnit);
+void StepperController::initRMT() {
+    rmt_config_t rmt_rx;
+    rmt_rx.channel = RMT_CHANNEL_0;
+    rmt_rx.gpio_num = static_cast<gpio_num_t>(pwmInPin);
+    rmt_rx.clk_div = 80; // Assuming 80 MHz APB clock
+    rmt_rx.mem_block_num = 1;
+    rmt_rx.rmt_mode = RMT_MODE_RX;
+    rmt_rx.rx_config.filter_en = true;
+    rmt_rx.rx_config.filter_ticks_thresh = 100;
+    rmt_rx.rx_config.idle_threshold = 4000; // Set based on your PWM frequency
+
+    rmt_config(&rmt_rx);
+    rmt_driver_install(rmt_rx.channel, 1000, 0); // Allocate memory for RX ring buffer
 }
 void StepperController::loadSettings() {
     preferences.begin("stepper", false);
@@ -61,19 +54,37 @@ void StepperController::saveSettings() {
     preferences.end();
 }
 
-static void handleStepInterrupt() {
-    digitalWrite(dirPinOut, digitalRead(dirPinIn));  // Copy direction from input to output
-    digitalWrite(stepPinOut, HIGH);  // Trigger step pulse
-    delayMicroseconds(5);  // Minimum pulse width
-    digitalWrite(stepPinOut, LOW);
+void StepperController::readRMT() {
+    RingbufHandle_t rb = NULL;
+    rmt_get_ringbuf_handle(RMT_CHANNEL_0, &rb);
+    rmt_rx_start(RMT_CHANNEL_0, true);
+
+    size_t rx_size = 0;
+    rmt_item32_t* item = (rmt_item32_t*) xRingbufferReceive(rb, &rx_size, 1000);
+    if (item) {
+        int high_duration = item->duration0; // High part of the PWM pulse
+        int low_duration = item->duration1;  // Low part of the PWM pulse
+        int total_duration = high_duration + low_duration;
+        dutyCycle = (high_duration / (float)total_duration) * 100.0;
+
+        // Use duty cycle or frequency for further processing
+        // Serial.print("Duty Cycle: ");
+        // Serial.print(dutyCycle);
+        // Serial.println("%");
+
+        vRingbufferReturnItem(rb, (void*) item);
+    }
+    rmt_rx_stop(RMT_CHANNEL_0);
 }
 void StepperController::loop() {
-    int pwmValue = analogRead(pwmInPin);  // Read PWM value to decide on the mode
-    if (pwmValue > 0) {  // Check if there's a significant PWM signal
+    readRMT(); // Read the PWM duty cycle
+
+    // Process duty cycle to decide on the mode
+    if (dutyCycle > 0) {  // Assuming duty_cycle is stored from readRMT
         if (currentMode != SPINDLE_MODE) {
             switchToSpindleMode();
         }
-        handleSpindleMode(pwmValue);
+        handleSpindleMode(dutyCycle);
     } else {
         if (currentMode != MOTION_MODE) {
             switchToMotionMode();
@@ -96,17 +107,22 @@ void StepperController::switchToSpindleMode() {
     stepper->enableOutputs();  // Ensure stepper is enabled
 }
 
-void StepperController::handleSpindleMode(int pwmValue) {
-    unsigned long rpm = map(pwmValue, 0, 1023, 0, 1200);  // Convert PWM signal to an RPM value
-    // Calculate the desired speed in steps per second
-    long stepsPerSecond = (rpm * stepsPerRevolution) / 60;
-    setStepperSpeed(stepsPerSecond);  // Adjust the stepper's speed
-}
+void StepperController::handleSpindleMode(float duty_cycle) {
+    // Map duty cycle (0% to 100%) to RPM (0 to 1200 RPM)
+    float maxRPM = 1200.0;  // Maximum RPM at 100% duty cycle
+    float rpm = (duty_cycle / 100.0) * maxRPM;
 
-void StepperController::setStepperSpeed(long stepsPerSecond) {
-    // Here you would need to adapt this method to your specific stepper settings and capabilities.
+    // Convert RPM to steps per minute
+    long stepsPerMinute = static_cast<long>(rpm * stepsPerRevolution / 60);
+
+    // Now set the speed in steps per minute
     if (stepper) {
-        stepper->moveTo(stepper->getCurrentPosition() + stepsPerSecond); // Example to set a target position
-        stepper->setSpeedInHz(stepsPerSecond); // Set speed for stepper in Hz (steps per second)
+        stepper->setSpeedInHz(stepsPerMinute / 60);  // FastAccelStepper uses Hz, convert steps/min to steps/sec
+    }
+
+    // Optionally, start the stepper if not already moving
+    if (!stepper->isRunning()) {
+        stepper->moveTo(stepper->getCurrentPosition() + stepsPerMinute); // Example to move a certain number of steps
     }
 }
+
