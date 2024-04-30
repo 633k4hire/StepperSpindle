@@ -104,9 +104,14 @@ void StepperController::handleSpindleMode(int pwmValue) {
 }
 
 void StepperController::setStepperSpeed(long stepsPerSecond) {
-    // Here you would need to adapt this method to your specific stepper settings and capabilities.
+    // Define maximum steps per second based on maximum RPM
+    const long maxStepsPerSecond = (MAX_RPM * stepsPerRevolution) / 60;
+
+    // Limit the steps per second to the maximum allowable speed
+    long limitedStepsPerSecond = min(stepsPerSecond, maxStepsPerSecond);
+
     if (stepper) {
-        stepper->moveTo(stepper->getCurrentPosition() + stepsPerSecond); // Example to set a target position
-        stepper->setSpeedInHz(stepsPerSecond); // Set speed for stepper in Hz (steps per second)
+        // Set speed for stepper in Hz (steps per second)
+        stepper->setSpeedInHz(limitedStepsPerSecond);
     }
 }

@@ -44,4 +44,5 @@ private:
     // Constants for mode identification
     static const unsigned int MOTION_MODE = 0;
     static const unsigned int SPINDLE_MODE = 1;
+    static const unsigned int MAX_RPM = 2000;
 };
