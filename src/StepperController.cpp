@@ -37,7 +37,7 @@ void StepperController::initRMT() {
     rmt_rx.rmt_mode = RMT_MODE_RX;
     rmt_rx.rx_config.filter_en = true;
     rmt_rx.rx_config.filter_ticks_thresh = 100;
-    rmt_rx.rx_config.idle_threshold = 4000; // Set based on your PWM frequency
+    rmt_rx.rx_config.idle_threshold = 5000; // Set based on your PWM frequency
 
     rmt_config(&rmt_rx);
     rmt_driver_install(rmt_rx.channel, 1000, 0); // Allocate memory for RX ring buffer
