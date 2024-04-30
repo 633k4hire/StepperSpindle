@@ -27,7 +27,15 @@ void StepperController::setup() {
     }
 
     // Set up interrupt for Motion Mode pass-through
-    attachInterrupt(digitalPinToInterrupt(stepPinIn), handleStepInterrupt, RISING);
+    attachInterrupt(digitalPinToInterrupt(stepPinIn), handleStepInterrupt, CHANGE);
+
+    // Attach an interrupt to handle changes in direction
+    digitalWrite(dirPinOut, digitalRead(dirPinIn)); // Set initial direction
+    attachInterrupt(digitalPinToInterrupt(dirPinIn), handleDirectionChangeInterrupt, CHANGE);
+
+    // Attach an interrupt to handle changes in enable
+    digitalWrite(enablePinOut, digitalRead(enablePinIn)); // Set initial direction
+    attachInterrupt(digitalPinToInterrupt(enablePinIn), handleEnableChangeInterrupt, CHANGE);
 
     // Initialize the pulse counter for more accurate PWM measurements
     initPulseCounter();
@@ -61,11 +69,20 @@ void StepperController::saveSettings() {
     preferences.end();
 }
 
-static void handleStepInterrupt() {
-    digitalWrite(dirPinOut, digitalRead(dirPinIn));  // Copy direction from input to output
-    digitalWrite(stepPinOut, HIGH);  // Trigger step pulse
-    delayMicroseconds(5);  // Minimum pulse width
-    digitalWrite(stepPinOut, LOW);
+// Interrupt service routine for enable changes
+static void handleEnableChangeInterrupt() {
+    digitalWrite(enablePinOut, digitalRead(enablePinIn));
+}
+
+// Interrupt service routine for direction changes
+static void handleDirectionChangeInterrupt() {
+    digitalWrite(dirPinOut, digitalRead(dirPinIn));
+}
+
+// Interrupt service routine for step changes
+static void handleStepInterrupt() { 
+    // Immediately set the step output pin to the same state
+    digitalWrite(stepPinOut, digitalRead(stepPinIn));
 }
 void StepperController::loop() {
     int pwmValue = analogRead(pwmInPin);  // Read PWM value to decide on the mode
