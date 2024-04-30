@@ -1,4 +1,5 @@
 #pragma once
+
 #include "pins.h"
 #include <FastAccelStepper.h>
 #include <driver/pcnt.h>
@@ -16,13 +17,14 @@ public:
     void switchToSpindleMode();     // Switch to Spindle Mode
     void handleSpindleMode(int pwmValue);       // Handle operations in Spindle Mode based on PWM input
 
+    void setStepperSpeed(long stepsPerSecond);
+    
 private:
     void initPulseCounter();        // Initialize the pulse counter for PWM reading
-    int16_t readPWM();        // Read PWM value accurately
+    int16_t readPWM();              // Read PWM value accurately
     void loadSettings();            // Load settings from preferences
     void saveSettings();            // Save settings to preferences
 
-   
     // Preferences to store settings
     Preferences preferences;
 
