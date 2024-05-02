@@ -2,7 +2,7 @@
 
 #include "pins.h"
 #include <FastAccelStepper.h>
-#include <driver/pcnt.h>
+#include <driver/rmt.h>
 #include <Preferences.h>
 
 class StepperController {
@@ -19,13 +19,9 @@ public:
 
     void setStepperSpeed(long stepsPerSecond);
 
-    void startPWMMeasurement();
-    void endPWMMeasurement();
- 
-    
 private:
-    void initPulseCounter();        // Initialize the pulse counter for PWM reading
-    int16_t readPWM();              // Read PWM value accurately
+    void initRMT();                 // Initialize RMT for PWM reading
+    int16_t readPWM();              // Read PWM value using RMT
     void loadSettings();            // Load settings from preferences
     void saveSettings();            // Save settings to preferences
 
@@ -36,21 +32,14 @@ private:
     FastAccelStepperEngine engine;
     FastAccelStepper* stepper = nullptr;
 
-    // Pulse Counter settings
-    static const pcnt_unit_t pcntUnit = PCNT_UNIT_0; // PCNT unit for PWM input
-    static const pcnt_channel_t pcntChannel = PCNT_CHANNEL_0; // PCNT channel for PWM input
-
     // Mode control
     unsigned int defaultMode;       // Default mode on startup
     unsigned int currentMode;       // Current operating mode
     unsigned int stepsPerRevolution=1600; // Steps per revolution for Spindle Mode
 
-    // PWM
-    unsigned long pwmStartTime;  // Start time of the PWM measurement window
-    bool measuringPWM;  // Flag to indicate if a measurement is in progress
-    const unsigned long pwmMeasureWindow = 100;  // Measurement window in milliseconds (100ms)
-    unsigned int pwmFrequency = 5000;
-
+    // RMT
+    rmt_channel_t rmtChannel = RMT_CHANNEL_0; // RMT channel
+    rmt_config_t rmtConfig;         // RMT configuration structure
 
     // Constants for mode identification
     static const unsigned int MOTION_MODE = 0;
