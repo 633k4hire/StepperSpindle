@@ -18,6 +18,10 @@ public:
     void handleSpindleMode(int pwmValue);       // Handle operations in Spindle Mode based on PWM input
 
     void setStepperSpeed(long stepsPerSecond);
+
+    void startPWMMeasurement();
+    void endPWMMeasurement();
+ 
     
 private:
     void initPulseCounter();        // Initialize the pulse counter for PWM reading
@@ -39,7 +43,14 @@ private:
     // Mode control
     unsigned int defaultMode;       // Default mode on startup
     unsigned int currentMode;       // Current operating mode
-    unsigned int stepsPerRevolution; // Steps per revolution for Spindle Mode
+    unsigned int stepsPerRevolution=1600; // Steps per revolution for Spindle Mode
+
+    // PWM
+    unsigned long pwmStartTime;  // Start time of the PWM measurement window
+    bool measuringPWM;  // Flag to indicate if a measurement is in progress
+    const unsigned long pwmMeasureWindow = 100;  // Measurement window in milliseconds (100ms)
+    unsigned int pwmFrequency = 5000;
+
 
     // Constants for mode identification
     static const unsigned int MOTION_MODE = 0;

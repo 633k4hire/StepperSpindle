@@ -1,5 +1,21 @@
 #include "StepperController.h"
 
+// Interrupt service routine for enable changes
+static void handleEnableChangeInterrupt() {
+    digitalWrite(enablePinOut, digitalRead(enablePinIn));
+}
+
+// Interrupt service routine for direction changes
+static void handleDirectionChangeInterrupt() {
+    digitalWrite(dirPinOut, digitalRead(dirPinIn));
+}
+
+// Interrupt service routine for step changes
+static void handleStepInterrupt() { 
+    // Immediately set the step output pin to the same state
+    digitalWrite(stepPinOut, digitalRead(stepPinIn));
+}
+
 StepperController::StepperController() {
     // Constructor might set up some initial conditions if necessary
 }
@@ -13,6 +29,9 @@ void StepperController::setup() {
     pinMode(dirPinOut, OUTPUT);
     pinMode(enablePinOut, OUTPUT);
     pinMode(stepPinOut, OUTPUT);
+
+    pwmStartTime = 0;
+    measuringPWM = false;
 
     loadSettings();  // Load settings from preferences
 
@@ -60,43 +79,49 @@ void StepperController::initPulseCounter() {
 void StepperController::loadSettings() {
     preferences.begin("stepper", false);
     stepsPerRevolution = preferences.getUInt("stepsPerRev", 1600);  // Default to 1600 steps
+    stepsPerRevolution = preferences.getUInt("maxRpm", 2000);  // Default to 1600 steps
     preferences.end();
 }
 
 void StepperController::saveSettings() {
     preferences.begin("stepper", true);
     preferences.putUInt("stepsPerRev", stepsPerRevolution);
+    preferences.putUInt("maxRpm", MAX_RPM);
     preferences.end();
 }
 
-// Interrupt service routine for enable changes
-static void handleEnableChangeInterrupt() {
-    digitalWrite(enablePinOut, digitalRead(enablePinIn));
-}
 
-// Interrupt service routine for direction changes
-static void handleDirectionChangeInterrupt() {
-    digitalWrite(dirPinOut, digitalRead(dirPinIn));
-}
-
-// Interrupt service routine for step changes
-static void handleStepInterrupt() { 
-    // Immediately set the step output pin to the same state
-    digitalWrite(stepPinOut, digitalRead(stepPinIn));
-}
 void StepperController::loop() {
-    int pwmValue = analogRead(pwmInPin);  // Read PWM value to decide on the mode
-    if (pwmValue > 0) {  // Check if there's a significant PWM signal
-        if (currentMode != SPINDLE_MODE) {
-            switchToSpindleMode();
+   if (!measuringPWM) {
+        startPWMMeasurement();
+    } else if (millis() - pwmStartTime >= pwmMeasureWindow) {
+        int pwmValue = readPWM();
+        endPWMMeasurement();
+
+        if (pwmValue > 0) {
+            if (currentMode != SPINDLE_MODE) {
+                switchToSpindleMode();
+            }
+            handleSpindleMode(pwmValue);
+        } else {
+            if (currentMode != MOTION_MODE) {
+                switchToMotionMode();
+            }
+            handleMotionMode();
         }
-        handleSpindleMode(pwmValue);
-    } else {
-        if (currentMode != MOTION_MODE) {
-            switchToMotionMode();
-        }
-        handleMotionMode();
     }
+
+}
+
+void StepperController::startPWMMeasurement() {
+    measuringPWM = true;
+    pwmStartTime = millis();
+    pcnt_counter_clear(pcntUnit);  // Clear the counter to start fresh
+}
+
+void StepperController::endPWMMeasurement() {
+    measuringPWM = false;
+    // Other cleanup actions if necessary
 }
 
 void StepperController::switchToMotionMode() {
@@ -114,10 +139,22 @@ void StepperController::switchToSpindleMode() {
 }
 
 void StepperController::handleSpindleMode(int pwmValue) {
-    unsigned long rpm = map(pwmValue, 0, 1023, 0, 1200);  // Convert PWM signal to an RPM value
+    unsigned long rpm = map(pwmValue, 0, 1023, 0, MAX_RPM);  // Convert PWM signal to an RPM value
     // Calculate the desired speed in steps per second
     long stepsPerSecond = (rpm * stepsPerRevolution) / 60;
     setStepperSpeed(stepsPerSecond);  // Adjust the stepper's speed
+}
+
+int16_t StepperController::readPWM() {
+    int16_t count = 0;
+    pcnt_get_counter_value(pcntUnit, &count);
+    pcnt_counter_clear(pcntUnit);  // Clear after reading to prepare for the next cycle
+
+    int totalPulses = pwmFrequency * (pwmMeasureWindow / 1000.0);  // Calculate total pulses over the window
+    float dutyCycle = (float)count / totalPulses * 100.0f;
+    int pwmValue = (int)(dutyCycle / 100.0f * 1023);
+
+    return pwmValue;
 }
 
 void StepperController::setStepperSpeed(long stepsPerSecond) {
