@@ -10,8 +10,8 @@ unsigned long previousMillis = 0;
 const long interval = 1000; // Interval at which to print status to Serial (1 second)
 
 // WiFi credentials (update these with your network details)
-const char* ssid = "YourNewNeighbors";
-const char* password = "@tumamama13";
+const char* ssid = "SSID";
+const char* password = "PASSWORD";
 
 void setup() {
     Serial.begin(115200);
