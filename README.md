@@ -96,8 +96,8 @@ The board leverages the [FastAccelStepper Library](https://github.com/gin66/Fast
 3. **Configure WiFi:**  
    Update the WiFi credentials in the main code before uploading:
    ```cpp
-   const char* ssid = "YourNewNeighbors";
-   const char* password = "@tumamama13";
+   const char* ssid = "SSID";
+   const char* password = "PASSWORD";
    ```
 
 ---
