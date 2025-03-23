@@ -1,6 +1,3 @@
-Below is an example of a complete and detailed README for your board:
-
----
 
 # Stepper Spindle Board
 
