@@ -1,4 +1,4 @@
-```markdown
+
 # StepperAPI
 
 StepperAPI is a web-based API and dashboard for controlling and monitoring a stepper motor system using the FastAccelStepper library. The API provides endpoints to control spindle speed, execute motion commands, load/save settings, and retrieve detailed stepper status information. It also includes WiFi configuration support with an AP fallback and mDNS discovery.
@@ -87,7 +87,7 @@ On startup, the board attempts to connect to WiFi using provided credentials. If
     "rpm": 123,
     "position": 456
   }
-  ```
+
 
 - **POST `/api/spindle`**  
   **Description:** Sets the spindle speed and direction (for spindle mode).  
