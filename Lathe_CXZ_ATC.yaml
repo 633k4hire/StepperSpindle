@@ -1,0 +1,191 @@
+board: MKS-DLC32 V2.1
+name: Lathe_XZC_ATC
+meta: (03.23.2025) by Matthew Metzger
+kinematics:
+  Cartesian:
+
+# uart1:
+#   txd_pin: gpio.26
+#   rxd_pin: gpio.4
+#   rts_pin: NO_PIN
+#   cts_pin: NO_PIN
+#   baud: 1000000
+#   mode: 8N1
+
+# uart_channel1:
+#   report_interval_ms: 75
+#   uart_num: 1
+
+stepping:
+  engine: I2S_STATIC
+  idle_ms: 0
+  pulse_us: 4
+  dir_delay_us: 1
+  disable_delay_us: 0
+axes:
+  #shared_stepper_disable_pin: I2SO.0
+  x:
+    steps_per_mm: 320.0
+    max_rate_mm_per_min: 5000.0
+    acceleration_mm_per_sec2: 500.0
+    max_travel_mm: 64.000
+    soft_limits: true
+    homing:
+      cycle: 2
+      positive_direction: true
+      mpos_mm: 64.000
+      feed_mm_per_min: 600.000
+      seek_mm_per_min: 1000.000
+      settle_ms: 500
+      seek_scaler: 1.100
+      feed_scaler: 1.100
+
+    motor0:
+      limit_neg_pin: gpio.36:low
+      hard_limits: false
+      pulloff_mm: 2.000
+      stepstick:
+        step_pin: I2SO.1
+        direction_pin: I2SO.2
+        disable_pin: I2SO.0
+
+  z:
+    steps_per_mm: 320.0
+    max_rate_mm_per_min: 10000.000
+    acceleration_mm_per_sec2: 500.000
+    max_travel_mm: 107.000
+    soft_limits: true
+    homing:
+      cycle: 1
+      positive_direction: true
+      mpos_mm: 107.000
+      feed_mm_per_min: 600.000
+      seek_mm_per_min: 1000.000
+      settle_ms: 500
+      seek_scaler: 1.100
+      feed_scaler: 1.100
+
+    motor0:
+      limit_neg_pin: gpio.34:low
+      hard_limits: false
+      pulloff_mm: 1.000
+      stepstick:
+        step_pin: I2SO.3
+        direction_pin: I2SO.4
+        disable_pin: I2SO.0
+
+  a:
+    steps_per_mm: 400.0
+    max_rate_mm_per_min: 5000.0
+    acceleration_mm_per_sec2: 500.0
+    max_travel_mm: 10000000.0
+    soft_limits: false    
+
+    motor0:
+      limit_neg_pin: NO_PIN
+      hard_limits: false
+      pulloff_mm: 1.000
+      stepstick:
+        step_pin: gpio.33
+        direction_pin: gpio.5:low
+        #disable_pin:
+
+  c:
+    steps_per_mm: 533.333
+    max_rate_mm_per_min: 2000.000
+    acceleration_mm_per_sec2: 75.000
+    max_travel_mm: 100000.000
+    soft_limits: false
+    # homing:
+    #   cycle: 0
+    #   positive_direction: false
+    #   mpos_mm: 0.000
+    #   feed_mm_per_min: 300.000
+    #   seek_mm_per_min: 300.000
+    #   settle_ms: 500
+    #   seek_scaler: 1.100
+    #   feed_scaler: 1.100
+
+    motor0:
+      limit_neg_pin: NO_PIN
+      hard_limits: false
+      pulloff_mm: 2.000
+      stepstick:
+        step_pin: I2SO.5
+        direction_pin: I2SO.6:low
+        disable_pin: I2SO.0
+
+i2so:
+  bck_pin: gpio.16
+  data_pin: gpio.21
+  ws_pin: gpio.17
+
+spi:
+  miso_pin: gpio.12
+  mosi_pin: gpio.13
+  sck_pin: gpio.14
+
+sdcard:
+  cs_pin: gpio.15
+  card_detect_pin: NO_PIN
+
+control:
+  safety_door_pin: NO_PIN
+  reset_pin: NO_PIN
+  feed_hold_pin: NO_PIN
+  cycle_start_pin: NO_PIN
+  macro0_pin: gpio.33:low:pu
+  macro1_pin: NO_PIN
+  macro2_pin: NO_PIN
+  macro3_pin: NO_PIN
+
+macros:
+  startup_line0:
+  startup_line1:
+  macro0: $SD/Run=lathetest.gcode
+  macro1: $SD/Run=home.gcode
+  macro2:
+  macro3:
+
+coolant:
+  flood_pin: NO_PIN
+  mist_pin: NO_PIN
+  delay_ms: 0
+
+probe:
+  pin: gpio.22
+  check_mode_start: true
+
+# this will allow the spindle stepper to be controlled as a spindle, as if it is an hbridge
+HBridge:
+  pwm_hz: 5000
+  output_cw_pin: gpio.25
+  output_ccw_pin: gpio.26 
+  enable_pin: gpio.27
+  disable_with_s0: true
+  s0_with_disable: true
+  spinup_ms: 1000
+  spindown_ms: 1000
+  tool_num: 5
+  speed_map: 0=0.000% 10000=100.000%
+  off_on_alarm: true
+  #atc:
+  #m6_macro: $SD/Run=tool_change.gcode
+
+
+# user_outputs:
+#   analog0_pin: NO_PIN
+#   analog1_pin: NO_PIN
+#   analog2_pin: NO_PIN
+#   analog3_pin: NO_PIN
+#   analog0_hz: 5000
+#   analog1_hz: 5000
+#   analog2_hz: 5000
+#   analog3_hz: 5000
+#   digital0_pin: NO_PIN
+#   digital1_pin: NO_PIN
+#   digital2_pin: NO_PIN
+#   digital3_pin: NO_PIN
+
+start:
+  must_home: false

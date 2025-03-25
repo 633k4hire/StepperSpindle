@@ -103,7 +103,7 @@ control:
   reset_pin: NO_PIN
   feed_hold_pin: NO_PIN
   cycle_start_pin: NO_PIN
-  macro0_pin: gpio.33:low:pu
+  macro0_pin: NO_PIN
   macro1_pin: NO_PIN
   macro2_pin: NO_PIN
   macro3_pin: NO_PIN
@@ -111,7 +111,7 @@ control:
 macros:
   startup_line0:
   startup_line1:
-  macro0: $SD/Run=lathetest.gcode
+  macro0: $SD/Run=lasertest.gcode
   macro1: $SD/Run=home.gcode
   macro2:
   macro3:
@@ -125,45 +125,29 @@ probe:
   pin: gpio.22
   check_mode_start: true
 
-# this will allow the spindle stepper to be controlled as a spindle, as if it is an hbridge
-HBridge:
+Laser:
   pwm_hz: 5000
-  output_cw_pin: gpio.25
-  output_ccw_pin: gpio.26 
-  enable_pin: gpio.27
-  disable_with_s0: true
-  s0_with_disable: true
-  spinup_ms: 1000
-  spindown_ms: 1000
-  tool_num: 5
-  speed_map: 0=0.000% 10000=100.000%
-  off_on_alarm: true
-  #atc:
-  #m6_macro: $SD/Run=tool_change.gcode
-
-# Laser:
-#   pwm_hz: 5000
-#   #L on Beeper / IN on TTL
-#   output_pin: gpio.32
-#   enable_pin: I2SO.7
-#   disable_with_s0: false
-#   s0_with_disable: false
-#   tool_num: 0
-#   speed_map: 0=0.000% 0=12.500% 1700=100.000%
-# # 135=0mA 270=5mA 400=10mA 700=16mA
-# user_outputs:
-#   analog0_pin: NO_PIN
-#   analog1_pin: NO_PIN
-#   analog2_pin: NO_PIN
-#   analog3_pin: NO_PIN
-#   analog0_hz: 5000
-#   analog1_hz: 5000
-#   analog2_hz: 5000
-#   analog3_hz: 5000
-#   digital0_pin: NO_PIN
-#   digital1_pin: NO_PIN
-#   digital2_pin: NO_PIN
-#   digital3_pin: NO_PIN
+  #L on Beeper / IN on TTL
+  output_pin: gpio.32
+  enable_pin: I2SO.7
+  disable_with_s0: false
+  s0_with_disable: false
+  tool_num: 0
+  speed_map: 0=0.000% 0=12.500% 1700=100.000%
+# 135=0mA 270=5mA 400=10mA 700=16mA
+user_outputs:
+  analog0_pin: NO_PIN
+  analog1_pin: NO_PIN
+  analog2_pin: NO_PIN
+  analog3_pin: NO_PIN
+  analog0_hz: 5000
+  analog1_hz: 5000
+  analog2_hz: 5000
+  analog3_hz: 5000
+  digital0_pin: NO_PIN
+  digital1_pin: NO_PIN
+  digital2_pin: NO_PIN
+  digital3_pin: NO_PIN
 
 start:
   must_home: false

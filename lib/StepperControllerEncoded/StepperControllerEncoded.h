@@ -2,6 +2,9 @@
 
 #include <FastAccelStepper.h>
 #include <Preferences.h>
+#include <AS5600.h>       // https://github.com/RobTillaart/AS5600
+#include <Button.h>       // https://github.com/madleech/Button
+#include <Wire.h>
 
 // Input pins from the MKS board
 #define dirPinIn             7    // Direction input from MKS
@@ -18,6 +21,13 @@
 #define dirPinOut            6    // Direction output
 #define enablePinOut         5    // Enable output
 #define stepPinOut           4    // Step output
+
+// Button for zero calibration (attached to IO0)
+#define ZERO_BUTTON_PIN      0
+
+// Logging macros
+#define LOGI(x) Serial.println(x)
+#define LOGE(x) Serial.println(x)
 
 class StepperController {
 public:
@@ -43,14 +53,9 @@ public:
     void disableMotionOverride();
     void testMotionCommand();
 
-    // --- Web API command functions ---
-    // For spindle mode:
-    void webSetSpindleSpeed(unsigned long rpm, bool cwDirection);
-    // For motion mode:
-    void webMotionMoveTo(int32_t position, bool blocking = true);
-    void webMotionMove(int32_t steps, bool blocking = true);
-    void webMotionStop();
-
+    // Functions for encoder calibration (zeroing and calibration to set stepsPerRevolution)
+    void calibrateEncoder(); // Calibration stub
+    void setEncoderZero();
 
     void loadSettings();
     void saveSettings();
@@ -60,27 +65,45 @@ public:
     unsigned long getCurrentRPM(); 
     int getCurrentPosition();
 
-
+    // --- Member variables ---
     Preferences preferences;
-    FastAccelStepperEngine engine = FastAccelStepperEngine();
-    FastAccelStepper* stepper = nullptr;
+    FastAccelStepperEngine engine;
+    FastAccelStepper* stepper;
 
     // Mode control variables
     unsigned int defaultMode;
     unsigned int currentMode;
-    unsigned int stepsPerRevolution = 400; //half step mode (200 steps per revolution)
+    unsigned int stepsPerRevolution; // Updated via encoder calibration
 
     // FastAccelStepper configuration settings (defaults)
-    long acceleration = 1000;                // steps per s²
-    uint32_t linearAcceleration = 0;         // linear acceleration steps (0 = disabled)
-    uint32_t jumpStart = 0;                  // jump start steps
-    bool autoEnable = true;                  // auto-enable outputs
+    long acceleration;
+    uint32_t linearAcceleration;
+    uint32_t jumpStart;
+    bool autoEnable;
 
     // Flag for motion override testing (bypasses passthrough interrupts)
-    bool motionOverride = false;
+    bool motionOverride;
 
     // Constants for mode identification and limits
     static const unsigned int MOTION_MODE  = 0;
     static const unsigned int SPINDLE_MODE = 1;
     static const unsigned int MAX_RPM      = 2000;
+
+    // Encoder & PID variables
+    AS5600 encoder;             // AS5600 encoder instance (I²C)
+    Button zeroButton;          // Button instance for zeroing (with debounce)
+    float encoderZeroOffset;    // Zero reference offset (degrees)
+    double lastEncoderAngle;
+    unsigned long lastEncoderTime;   // in microseconds
+    double actualRPM;                // Measured RPM from encoder
+
+    // PID variables for spindle speed correction
+    double pidSetpoint;         // Desired RPM (from PWM input)
+    double pidInput;            // Measured RPM (from encoder)
+    double pidOutput;           // PID controller output (RPM adjustment)
+    double pidKp, pidKi, pidKd; // PID tuning parameters
+    double pidIntegral;
+    double pidLastError;
+    unsigned long pidLastTime;  // in milliseconds
 };
+

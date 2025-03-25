@@ -313,7 +313,7 @@ void StepperApi::begin(const char* ssid, const char* password) {
     Serial.print("Connecting to WiFi");
     WiFi.begin(ssid, password);
     unsigned long startAttemptTime = millis();
-    const unsigned long connectTimeout = 10000; // 10 seconds timeout
+    const unsigned long connectTimeout = 6000; // 10 seconds timeout
     while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < connectTimeout) {
         delay(500);
         Serial.print(".");
