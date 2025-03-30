@@ -12,7 +12,6 @@ stepping:
   disable_delay_us: 0
 axes:
   shared_stepper_disable_pin: i2so.0
-  shared_stepper_reset_pin: NO_PIN
   x:
     steps_per_mm: 320
     max_rate_mm_per_min: 1000
@@ -30,15 +29,11 @@ axes:
       pulloff_mm: 2
       stepstick:
         step_pin: i2so.1
-        direction_pin: i2so.2
-        disable_pin: NO_PIN
-        ms1_pin: NO_PIN
-        ms2_pin: NO_PIN
-        ms3_pin: NO_PIN
+        direction_pin: i2so.2        
   y:
-    steps_per_mm: 400.0
-    max_rate_mm_per_min: 5000.0
-    acceleration_mm_per_sec2: 500.0
+    steps_per_mm: 320
+    max_rate_mm_per_min: 1000.0
+    acceleration_mm_per_sec2: 100.0
     max_travel_mm: 10000000.0
     soft_limits: false    
 
@@ -47,13 +42,12 @@ axes:
       hard_limits: false
       pulloff_mm: 1.000
       stepstick:
-        step_pin: gpio.33
-        direction_pin: gpio.5:low
-        disable_pin: NO_PIN
+        step_pin: i2so.7
+        direction_pin: NO_PIN
   z:
     steps_per_mm: 320
     max_rate_mm_per_min: 1000
-    acceleration_mm_per_sec2: 50
+    acceleration_mm_per_sec2: 100
     max_travel_mm: 107
     soft_limits: true
     homing:
@@ -67,15 +61,11 @@ axes:
       pulloff_mm: 2
       stepstick:
         step_pin: i2so.3
-        direction_pin: i2so.4
-        disable_pin: NO_PIN
-        ms1_pin: NO_PIN
-        ms2_pin: NO_PIN
-        ms3_pin: NO_PIN
+        direction_pin: i2so.4        
   a:
-    steps_per_mm: 533
-    max_rate_mm_per_min: 2000
-    acceleration_mm_per_sec2: 75
+    steps_per_mm: 320
+    max_rate_mm_per_min: 1000
+    acceleration_mm_per_sec2: 100
     max_travel_mm: 100000
     soft_limits: false
     motor0:
@@ -86,12 +76,7 @@ axes:
       pulloff_mm: 1
       stepstick:
         step_pin: i2so.5
-        direction_pin: i2so.6
-        disable_pin: NO_PIN
-        ms1_pin: NO_PIN
-        ms2_pin: NO_PIN
-        ms3_pin: NO_PIN
-
+        direction_pin: i2so.6     
 i2so:
   bck_pin: gpio.16
   data_pin: gpio.21
@@ -158,7 +143,7 @@ user_outputs:
   analog1_hz: 5000
   analog2_hz: 5000
   analog3_hz: 5000
-  digital0_pin: NO_PIN
+  digital0_pin: gpio.4
   digital1_pin: NO_PIN
   digital2_pin: NO_PIN
   digital3_pin: NO_PIN
