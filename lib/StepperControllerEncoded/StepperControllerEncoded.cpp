@@ -1,4 +1,4 @@
-#include "StepperController.h"
+#include "StepperControllerEncoded.h"
 #include <Wire.h>
 
 // Global variables for PWM measurement via interrupts
@@ -69,7 +69,7 @@ StepperController::StepperController() :
     autoEnable(true),
     motionOverride(false),
     encoder(),
-    zeroButton(ZERO_BUTTON_PIN, true),
+    zeroButton(ZERO_BUTTON_PIN),
     encoderZeroOffset(0.0),
     lastEncoderAngle(0.0),
     lastEncoderTime(0),
@@ -145,13 +145,13 @@ void StepperController::setup() {
 
 void StepperController::loop() {
     // Process zero calibration button
-    zeroButton.loop();
+    
     if (zeroButton.pressed()) {
         setEncoderZero();
     }
 
     // Poll encoder for RPM measurement
-    double currentAngle = encoder.getAngle(); // angle in degrees [0,360)
+    double currentAngle = encoder.readAngle(); // angle in degrees [0,360)
     double relativeAngle = currentAngle - encoderZeroOffset;
     if (relativeAngle < 0) relativeAngle += 360;
 
@@ -387,7 +387,7 @@ void StepperController::testMotionCommand() {
 }
 
 void StepperController::setEncoderZero() {
-    encoderZeroOffset = encoder.getAngle();
+    encoderZeroOffset = encoder.readAngle();
     preferences.begin("stepper", false);
     preferences.putFloat("encZero", encoderZeroOffset);
     preferences.end();

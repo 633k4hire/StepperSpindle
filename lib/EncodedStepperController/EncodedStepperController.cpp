@@ -6,7 +6,7 @@
 EncodedStepperController::EncodedStepperController() :
     StepperController(),
     encoder(), 
-    zeroButton(ZERO_BUTTON_PIN, true),
+    zeroButton(ZERO_BUTTON_PIN),
     encoderZeroOffset(0.0),
     lastEncoderAngle(0.0),
     lastEncoderTime(0),
@@ -34,14 +34,14 @@ void EncodedStepperController::begin() {
 }
 
 void EncodedStepperController::loopWithFeedback() {
-    // Process the zero calibration button.
-    zeroButton.loop();
+        // Process the zero calibration button.
+   
     if (zeroButton.pressed()) {
         setEncoderZero();
     }
 
     // Poll the encoder for RPM measurement.
-    double currentAngle = encoder.getAngle();  // angle in degrees [0, 360)
+    double currentAngle = encoder.readAngle();  // angle in degrees [0, 360)
     double relativeAngle = currentAngle - encoderZeroOffset;
     if (relativeAngle < 0) {
         relativeAngle += 360;
@@ -114,7 +114,7 @@ void EncodedStepperController::handleSpindleModeWithFeedback(uint16_t pwmValue, 
 
 void EncodedStepperController::setEncoderZero() {
     // Read the current encoder angle and store it as the zero offset.
-    encoderZeroOffset = encoder.getAngle();
+    encoderZeroOffset = encoder.readAngle();
     preferences.begin("stepper", false);
     preferences.putFloat("encZero", encoderZeroOffset);
     preferences.end();
