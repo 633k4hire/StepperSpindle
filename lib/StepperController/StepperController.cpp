@@ -56,19 +56,29 @@ void IRAM_ATTR pwmCCW_ISR()
 }
 
 // Passthrough ISRs for Motion Mode signals (kept minimal)
+volatile int enablePinState = LOW;
+volatile int dirPinState = LOW;
+volatile int stepPinState = LOW;
+
 static void IRAM_ATTR handleEnableChangeInterrupt()
 {
-    digitalWrite(enablePinOut, digitalRead(enablePinIn));
+    enablePinState = digitalRead(enablePinIn);
+    digitalWrite(enablePinOut, enablePinState);
+    Serial.println("EN: " + String(enablePinState));
 }
 
 static void IRAM_ATTR handleDirectionChangeInterrupt()
 {
-    digitalWrite(dirPinOut, digitalRead(dirPinIn));
+    dirPinState = digitalRead(dirPinIn);
+    digitalWrite(dirPinOut, dirPinState);
+    Serial.println("DIR: " + String(dirPinState));
 }
 
 static void IRAM_ATTR handleStepInterrupt()
 {
-    digitalWrite(stepPinOut, digitalRead(stepPinIn));
+    stepPinState = digitalRead(stepPinIn);
+    digitalWrite(stepPinOut, stepPinState);
+    Serial.println("STEP: " + String(stepPinState));
 }
 
 StepperController::StepperController()

@@ -1,8 +1,8 @@
 ;-------------------------------
 ; FluidNC ATC Tool Change Macro
 ; Designed for a 5-tool turret:
-; - 200 steps per full rotation → 40 steps per tool position
-; - 2 steps backwards for backlash/locking
+; - 1mm per tool position
+; - 0.05 mm backwards for backlash/locking
 ;
 ; Assumptions:
 ;   * Machine starts with tool 1 in position.
@@ -11,7 +11,7 @@
 ;-------------------------------
 
 ; Ensure current tool variable is defined – if not, initialize to 1
-#<current_tool> = [#<current_tool> ?: 1]
+;#<current_tool> = [#<current_tool> ?: 1]
 
 ; Capture the desired tool from the M6 command.
 ; FluidNC automatically makes the tool number available in parameter T.
@@ -32,13 +32,16 @@ o2 if [#<delta> LT 0]
 o2 endif
 
 ; Calculate the total steps to move: each tool increment = 40 steps.
-#<steps> = [#<delta> * 40]
+#<steps> = [#<delta> * 1]
 
 ; Move the turret (A axis) forward the calculated steps.
-G1 A[#<steps>] F3000
+; Use external IO to set direction of turret
+M62 P0
+G1 A[#<steps> + 0.1] F75
 
 ; Apply the 2 step backlash compensation (move 2 steps backwards).
-G1 A-2 F3000
+M63 P0
+G1 A-0.076 F75
 
 ; Update the current tool variable to the new tool.
 #<current_tool> = #<target_tool>
